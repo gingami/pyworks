@@ -1,1 +1,0 @@
->minisat sample.dimacs output
