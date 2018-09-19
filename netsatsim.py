@@ -7,11 +7,6 @@ import itertools
 input_file="sample.txt"
 output_file="mid_file"
 
-if not(os.path.isfile(input_file)):
-    print('cannot find "samle.dimacs". ')
-    sys.exit()
-
-
 with open(input_file, mode='r') as f:
     P=[]
     S=set()
@@ -25,10 +20,10 @@ with open(input_file, mode='r') as f:
             color=len(path)
         P.append(path)
 
-dimacs="p cnf {} {}\n".format(color*len(S), (int(1+comb(len(S), 2))+len(P))*color)
+dimacs="p cnf {} {}\n".format(color*len(S), int(1+comb(color, 2))*len(S)+len(P)*color)
 #one-hot constraint
-for i in range(color):
-    line=[i+1+j*color for j in range(len(S))]
+for i in range(len(S)):
+    line=[i*color+j+1 for j in range(color)]
     dimacs+=' '.join(map(str, line))+' 0\n'
     for k, l in itertools.combinations(line, 2):
         dimacs+="{} {} 0\n".format(-k, -l)
@@ -43,14 +38,6 @@ with open(output_file, "w") as f:
     f.write(dimacs)
 
 
-
-
 input_file=output_file
 output_file="output"
-
-#例外処理に変更するかも
-if not(os.path.isfile(input_file)):
-    print('cannot find "samle.dimacs". ')
-    sys.exit()
-
 subprocess.call(["minisat", input_file, output_file])
