@@ -43,10 +43,10 @@ while True:
         f.write(gene_mid(P, S, color))
     subprocess.call(["minisat", mid_file, output_file])
     with open(output_file, "r") as f:
-        if f.read=="UNSAT/n":
-            color = color - 1
-        else :
+        if not(f.read=="UNSAT/n"):
             break
+        else :
+            color=color-1
         if color==0:
             print("could't find satisfiable color sets")
             break
