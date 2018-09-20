@@ -3,6 +3,48 @@ import sys
 import subprocess
 from scipy.special import comb
 import itertools
+import numpy as np
+import csv
+
+def netsatsim(Len_S, len_p, Len_P):
+    input_file = "input"
+    mid_file = "mid_file"
+    output_file = "output"
+    gene_input(Len_S, len_p, Len_P)
+
+    with open(input_file, mode='r') as f:
+        P = []
+        S = set()
+        color = None
+        for line in f:
+            path = line.strip().split(",")
+            S = S.union(path)
+            if color is None:
+                color = len(path)
+            elif color > len(path):
+                color = len(path)
+            P.append(path)
+
+    while True:
+        with open(mid_file, "w") as f:
+            f.write(gene_mid(P, S, color))
+        subprocess.call(["minisat", mid_file, output_file])
+        with open(output_file, "r") as f:
+            if not(f.read() == "UNSAT\n"):
+                return color
+            else:
+                color = color - 1
+            if color == 1:
+                print("could't find satisfiable color sets")
+                return 1
+
+def gene_input(Len_S, len_p, Len_P):
+    with open("input", mode='w') as f:
+        writer = csv.writer(f)
+        for i in range(Len_P):
+            p = list(np.random.choice([i for i in range(1, Len_S + 1)], len_p, replace=False))
+            writer.writerow(p)
+
 
 def gene_mid(P, S, color):
     dimacs = "p cnf {} {}\n".format(color * len(S), int(1 + comb(color, 2)) * len(S) + len(P) * color)
@@ -22,31 +64,17 @@ def gene_mid(P, S, color):
     return dimacs
 
 
-input_file="sample.txt"
-mid_file="mid_file"
-output_file="output"
-with open(input_file, mode='r') as f:
-    P=[]
-    S=set()
-    color=None
-    for line in f:
-        path=line.strip().split(", ")
-        S=S.union(path)
-        if color is None:
-            color=len(path)
-        elif color>len(path):
-            color=len(path)
-        P.append(path)
 
-while True:
-    with open(mid_file, "w") as f:
-        f.write(gene_mid(P, S, color))
-    subprocess.call(["minisat", mid_file, output_file])
-    with open(output_file, "r") as f:
-        if not(f.read=="UNSAT/n"):
-            break
-        else :
-            color=color-1
-        if color==0:
-            print("could't find satisfiable color sets")
-            break
+Len_S = 15
+len_p = 6
+Len_Pmax = 20
+iter=10
+
+with open("result.csv", mode='w') as f:
+    for Len_P in range(2, Len_Pmax):
+        sum=0
+        for i in range(iter):
+            sum+=netsatsim(Len_S, len_p, Len_P)
+
+        f.write("{}, {}\n".format(Len_P, sum/iter))
+print("simulation complete!!")
