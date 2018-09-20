@@ -17,7 +17,7 @@ def gene_mid(P, S, color):
     for i in range(len(P)):
         for j in range(color):
             for k in range(len(P[i])):
-                dimacs += "{} ".format((int(P[i][k].replace('s', '')) - 1) * color + j + 1)
+                dimacs += "{} ".format((int(P[i][k]) - 1) * color + j + 1)
             dimacs += '0\n'
     return dimacs
 
