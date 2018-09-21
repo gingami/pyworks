@@ -16,8 +16,8 @@ def netsatsim(Len_S, len_p, Len_P):
         P = []
         S = set()
         color = None
-        for line in f:
-            path = line.strip().split(",")
+        reader = csv.reader(f)
+        for path in reader:
             S = S.union(path)
             if color is None:
                 color = len(path)
@@ -64,17 +64,22 @@ def gene_mid(P, S, color):
     return dimacs
 
 
-
-Len_S = 15
+Len_Smin = 20
+Len_Smax = 30
+S_step = 5
 len_p = 6
 Len_Pmax = 20
-iter=10
+iter = 10
 
 with open("result.csv", mode='w') as f:
-    for Len_P in range(2, Len_Pmax):
+    writer=csv.writer(f)
+    for Len_P in range(1, Len_Pmax+1):
         sum=0
-        for i in range(iter):
-            sum+=netsatsim(Len_S, len_p, Len_P)
+        line = [Len_P]
+        for Len_S in range(Len_Smin, Len_Smax+1, S_step):
+            for j in range(iter):
+                sum+=netsatsim(Len_S, len_p, Len_P)
 
-        f.write("{}, {}\n".format(Len_P, sum/iter))
+            line.append(sum/iter)
+        writer.writerow(line)
 print("simulation complete!!")
