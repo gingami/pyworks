@@ -69,8 +69,8 @@ Len_Smin = 10
 Len_Smax = 30
 S_step = 10
 len_p = 6
-Len_Pmax = 20
-iter = 10
+Len_Pmax = 50
+iter = 100
 
 
 with open("result.csv", mode='w') as f:
@@ -80,6 +80,7 @@ with open("result.csv", mode='w') as f:
             sum = 0
             for j in range(iter):
                 sum+=netsatsim(Len_S, len_p, Len_P)
+                print(Len_S, Len_P)
             line.append(sum/iter)
         f.write(str(line).replace("[", "").replace("]", "")+'\n')   #小数点が1桁でしか出力されないためcsvモジュールを使わず
-print("simulation complete!!")
+print("simulation is completed!!")
