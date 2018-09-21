@@ -34,9 +34,9 @@ def netsatsim(Len_S, len_p, Len_P):
                 return color
             else:
                 color = color - 1
-            if color == 1:
-                print("could't find satisfiable color sets")
-                return 1
+        if color == 1:
+            print("could't find satisfiable color sets")
+            return 1
 
 def gene_input(Len_S, len_p, Len_P):
     with open("input", mode='w') as f:
@@ -56,10 +56,11 @@ def gene_mid(P, S, color):
             dimacs += "{} {} 0\n".format(-k, -l)
 
     # output constraint
+    Slist=list(S)
     for i in range(len(P)):
         for j in range(color):
             for k in range(len(P[i])):
-                dimacs += "{} ".format((int(P[i][k]) - 1) * color + j + 1)
+                dimacs += "{} ".format(int(Slist.index(P[i][k])) * color + j + 1)
             dimacs += '0\n'
     return dimacs
 
@@ -68,18 +69,17 @@ Len_Smin = 10
 Len_Smax = 30
 S_step = 10
 len_p = 6
-Len_Pmax = 50
+Len_Pmax = 20
 iter = 10
 
+
 with open("result.csv", mode='w') as f:
-    writer=csv.writer(f)
     for Len_P in range(1, Len_Pmax+1):
-        sum=0
         line = [Len_P]
         for Len_S in range(Len_Smin, Len_Smax+1, S_step):
+            sum = 0
             for j in range(iter):
                 sum+=netsatsim(Len_S, len_p, Len_P)
-
             line.append(sum/iter)
-        writer.writerow(line)
+        f.write(str(line).replace("[", "").replace("]", "")+'\n')   #小数点が1桁でしか出力されないためcsvモジュールを使わず
 print("simulation complete!!")
