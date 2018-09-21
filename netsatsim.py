@@ -64,11 +64,11 @@ def gene_mid(P, S, color):
     return dimacs
 
 
-Len_Smin = 20
+Len_Smin = 10
 Len_Smax = 30
-S_step = 5
+S_step = 10
 len_p = 6
-Len_Pmax = 20
+Len_Pmax = 50
 iter = 10
 
 with open("result.csv", mode='w') as f:
