@@ -73,14 +73,16 @@ Len_Smin = 10
 Len_Smax = 30
 S_step = 10
 len_p = 6
-Len_Pmax = 50
-iter = 100
+Len_Pmax = 100
+iter = 10
+
+Len_S=Len_Smin
 
 
 with open("result.csv", mode='w') as f:
     for Len_P in range(1, Len_Pmax+1):
-        line = [Len_P]
-        for Len_S in range(Len_Smin, Len_Smax+1, S_step):
+        line = []
+        for len_p in range(2, 7):
             sum = 0
             for j in range(iter):
                 sum+=netsatsim(Len_S, len_p, Len_P)
