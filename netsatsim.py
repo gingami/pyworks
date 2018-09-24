@@ -1,3 +1,7 @@
+"""
+パスの重複をなくす
+"""
+
 import os
 import sys
 import subprocess
