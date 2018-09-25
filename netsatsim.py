@@ -1,7 +1,3 @@
-"""
-パスの重複をなくす
-"""
-
 import os
 import sys
 import subprocess
@@ -42,11 +38,15 @@ def netsatsim(Len_S, len_p, Len_P):
             print("could't find satisfiable color sets")
             return 1
 
+
 def gene_input(Len_S, len_p, Len_P):
+    Pset=set()
+    Srange=[i for i in range(1, Len_S + 1)]
+    while(Len_P != len(Pset)):
+        Pset.add(tuple(np.random.choice(Srange, len_p, replace=False)))
     with open("input", mode='w') as f:
         writer = csv.writer(f)
-        for i in range(Len_P):
-            p = list(np.random.choice([i for i in range(1, Len_S + 1)], len_p, replace=False))
+        for p in Pset:
             writer.writerow(p)
 
 
@@ -69,14 +69,15 @@ def gene_mid(P, S, color):
     return dimacs
 
 
+
 Len_Smin = 10
 Len_Smax = 30
 S_step = 10
 len_p = 6
-Len_Pmax = 100
-iter = 10
+Len_Pmax = 50
+iter = 100
 
-Len_S=Len_Smin
+Len_S=20
 
 
 with open("result.csv", mode='w') as f:
@@ -86,7 +87,6 @@ with open("result.csv", mode='w') as f:
             sum = 0
             for j in range(iter):
                 sum+=netsatsim(Len_S, len_p, Len_P)
-                print(Len_S, Len_P)
             line.append(sum/iter)
         f.write(str(line).replace("[", "").replace("]", "")+'\n')   #小数点が1桁でしか出力されないためcsvモジュールを使わず
 print("simulation is completed!!")
