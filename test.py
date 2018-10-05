@@ -5,27 +5,53 @@ from scipy.special import comb
 import itertools
 import numpy as np
 import csv
-import time
 
-def netsatsim(Snum, len_p, Len_P):
+def sim(Snum, len_p, Len_P):
     input_file = "input"
     mid_file = "mid_file"
     output_file = "output"
     gene_input(Snum, len_p, Len_P)
 
     with open(input_file, mode='r') as f:
-        P = []
+        P = set()
         SonP = set()
-        color = None
         reader = csv.reader(f)
         for path in reader:
+            path=tuple(path)
             SonP = SonP.union(path)
-            if color is None:
-                color = len(path)
-            elif color > len(path):
-                color = len(path)
-            P.append(path)
+            P.add(path)
+    netsatsim(P, SonP, mid_file, output_file, len(tuple(gen_min_P(P))[0]))
 
+
+
+def gene_input(Snum, len_p, Len_P):
+    Pset=set()
+    Srange=[i for i in range(1, Snum + 1)]
+    while(Len_P != len(Pset)):
+        Pset.add(tuple(np.random.choice(Srange, len_p, replace=False)))
+    with open("input", mode='w') as f:
+        writer = csv.writer(f)
+        for p in Pset:
+            writer.writerow(p)
+
+
+
+def gen_min_P(P):
+    min=None
+    for path in P:
+        if min is None:
+            min = len(path)
+        elif min > len(path):
+            min = len(path)
+    min_P=set()
+    for path in P:
+        if len(path)==min:
+            min_P.add(path)
+    return min_P
+
+
+
+def netsatsim(P, SonP, mid_file, output_file, color):
     while True:
         with open(mid_file, "w") as f:
             f.write(gene_mid(P, SonP, color))
@@ -40,16 +66,6 @@ def netsatsim(Snum, len_p, Len_P):
             return 1
 
 
-def gene_input(Snum, len_p, Len_P):
-    Pset=set()
-    Srange=[i for i in range(1, Snum + 1)]
-    while(Len_P != len(Pset)):
-        Pset.add(tuple(np.random.choice(Srange, len_p, replace=False)))
-    with open("input", mode='w') as f:
-        writer = csv.writer(f)
-        for p in Pset:
-            writer.writerow(p)
-
 
 def gene_mid(P, S, color):
     dimacs = "p cnf {} {}\n".format(color * len(S), int(1 + comb(color, 2)) * len(S) + len(P) * color)
@@ -61,24 +77,17 @@ def gene_mid(P, S, color):
             dimacs += "{} {} 0\n".format(-k, -l)
 
     # output constraint
+    tup_P=tuple(P)
     Slist=list(S)
-    for i in range(len(P)):
+    for i in range(len(tup_P)):
         for j in range(color):
-            for k in range(len(P[i])):
-                dimacs += "{} ".format(int(Slist.index(P[i][k])) * color + j + 1)
+            for k in range(len(tup_P[i])):
+                dimacs += "{} ".format(int(Slist.index(tup_P[i][k])) * color + j + 1)
             dimacs += '0\n'
     return dimacs
 
 
 
-len_p = 10
-Len_P = 15
-iter = 100
 
-Snum=100
+sim(30, 6, 10)
 
-with open("time.csv", mode="w") as f:
-    for i in range(iter):
-        start=time.time()
-        netsatsim(Snum, len_p, Len_P)
-        f.write(str(time.time()-start)+"\n")
