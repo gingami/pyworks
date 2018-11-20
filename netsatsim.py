@@ -1,10 +1,14 @@
 import os
 import sys
+import time
 import subprocess
 from scipy.special import comb
 import itertools
 import numpy as np
 import csv
+
+
+
 
 def netsatsim(Snum, len_p, Len_P):
     input_file = "input"

@@ -1,11 +1,24 @@
-import os
-import sys
 import subprocess
 from scipy.special import comb
 import itertools
 import numpy as np
 import csv
 import random
+import functools
+import time
+
+
+def measure(func):
+    """
+    関数実行時間を計測するラッパー
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start=time.time()
+        ret=func(*args, **kwargs)
+        return ret, time.time()-start
+    return wrapper
+
 
 def sim(Snum, len_p, Len_P):
     input_file = "input"
@@ -18,8 +31,7 @@ def sim(Snum, len_p, Len_P):
         reader = csv.reader(f)
         for path in reader:
             P.add(tuple(path))
-    sa_algo(P)
-    #netsatsim(P, mid_file, output_file)
+    return sa_algo(P), netsatsim(P, mid_file, output_file)
 
 
 
@@ -35,10 +47,7 @@ def gene_input(Snum, len_p, Len_P):
 
 
 
-
-
-
-
+@measure
 def sa_algo(Pprev):
     S={Switch(no) for no in genS(Pprev)}
     P=set()
@@ -50,82 +59,105 @@ def sa_algo(Pprev):
                     path.append(s)
                     break
         P.add(tuple(path))
-    color=1
-    while loop_judge(S, color, P):
-        U1=gen_U1(P, S, u)
-        if not C(S, color):
-            col_s=random.choice(list(U1))
-        else:
-            if len(U1>1):
-                U2=gen_U2(U1)
-                K=U2
-            if len(U2>1):
-                U3 = gen_U3()
-                K = U3
-            if len(U3>1):
-                U4 = gen_U4()
-                K = U4
-            col_s=random.choice(list(K))
+    color=0
+    colS=set()
+    while loop_judge(S, colS, color, P):
+        K=gen_U1(P, S,colS, color)
+        if C(S, color):
+            if len(K)>1:
+                K=gen_U2(K, S, color, P)
+            if len(K)>1:
+                K = gen_U3(K, P)
+            if len(K)>1:
+                K = gen_U4(K, P)
+            if len(K)==0:
+                break
+        col_s=random.choice(list(K))
         col_s.color=color
+        colS.add(col_s)
 
         if satis_col(P, color, S):
             color+=1
 
+    return color
 
 
 
 
-def gen_U1(P, S, u):
+
+def gen_U1(P, S,colS, u):
     U1=set()
     max=None
-    for s in S:
+    for s in S.difference(colS):
         length=len(Fa(u, s, P, S))
-        if max is None:
+        if max is None or max<length:
             max=length
-        elif max<length:
-            max=length
-    for s in S:
+    for s in S.difference(colS):
         if len(Fa(u, s, P, S))==max:
             U1.add(s)
     return U1
 
 
-def gen_U2(U1, S, u, P):
+def gen_U2(K, S, u, P):
     U2=set()
     min = None
-    for s in U1:
+    for s in K:
         length = len(Ha(S, u, P, s))
-        if min is None:
+        if min is None or min > length:
             min = length
-        elif min > length:
-            min = length
-    for s in U1:
+    for s in K:
         if len(Ha(S, u, P, s)) == min:
             U2.add(s)
     return U2
 
-def gen_U3():
-    U3=set()
 
+def gen_U3(K, P):
+    U3=set()
+    max=None
+    for s in K:
+        min=None
+        for fl in F(P, s):
+            length=len(fl)
+            if min is None or min > length:
+                min=length
+        if max is None or max < min:
+            max=min
+    for s in K:
+        min=None
+        for fl in F(P, s):
+            length=len(fl)
+            if min is None or min > length:
+                min=length
+        if min==max:
+            U3.add(s)
     return U3
 
-def gen_U4():
+def gen_U4(K, P):
     U4=set()
-
+    min=None
+    for s in K:
+        length = len(F(P, s))
+        if min is None:
+            min = length
+        elif min > length:
+            min = length
+    for s in K:
+        if len(F(P, s)) == min:
+            U4.add(s)
     return U4
 
 
 
 
 
-def loop_judge(S, color, P):
-    for s in S:
-        if s.color==0:
-            return True
-    if color-1<len(list(gen_min_P(P))[0]):
-        return True
-    else :
+
+
+def loop_judge(S, colS, color, P):
+    if S==colS:
+            return False
+    if not color-1<len(list(gen_min_P(P))[0]):
         return False
+    return True
 
 
 def satis_col(P, col, S):
@@ -139,7 +171,7 @@ def satis_col(P, col, S):
 class Switch:
     def __init__(self, no):
         self.no=no
-        self.color=0
+        self.color=None
 
 
 #フロー集合P上に存在するスイッチ集合を生成
@@ -188,6 +220,8 @@ def Ha(S, u, P, s):
     S2=F(P, s)
     return S1.intersection(S2)
 
+
+@measure
 def netsatsim(P, mid_file, output_file):
     color=len(tuple(gen_min_P(P))[0])
     while True:
@@ -208,10 +242,11 @@ def netsatsim(P, mid_file, output_file):
 def gen_min_P(P):
     min=None
     for path in P:
+        length=len(path)
         if min is None:
-            min = len(path)
-        elif min > len(path):
-            min = len(path)
+            min = length
+        elif min > length:
+            min = length
     min_P=set()
     for path in P:
         if len(path)==min:
@@ -242,6 +277,26 @@ def gen_mid(P, color):
 
 
 
+Snummin = 10
+Snummax = 30
+S_step = 10
+len_p = 6
+Len_Pmax = 50
+iter = 100
 
-sim(30, 6, 10)
+Snum=20
 
+
+with open("result.csv", mode='w') as f:
+    for Len_P in range(1, Len_Pmax+1):
+        line = []
+        sum1 = np.array([0, 0.0])
+        sum2 = np.array([0, 0.0])
+        for i in range(iter):
+            sim1, sim2 = sim(Snum, len_p, Len_P)
+            sum1 += np.array(sim1)
+            sum2 += np.array(sim2)
+        line.extend(sum1 / iter)
+        line.extend(sum2 / iter)
+        f.write(str(line).replace("[", "").replace("]", "") + '\n')   #小数点が1桁でしか出力されないためcsvモジュールを使わず
+print("simulation is completed!!")
